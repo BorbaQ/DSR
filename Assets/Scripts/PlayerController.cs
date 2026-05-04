@@ -13,6 +13,7 @@ public class PlayerController : MonoBehaviour
     public AnimationClip specialAttackAnim;
     private string currentAnim;
     public UnityEngine.Animation anim;
+    private bool isAttacking = false;
 
     [Header("Movement")]
     public float speed = 6f;
@@ -21,38 +22,54 @@ public class PlayerController : MonoBehaviour
     public Vector3 velocity;
     public float turnSpeed = 10f;
     private CharacterController controller;
-    float forwardInput;
+
+    [Header("Attack Rotation")]
+    public float attackWindupTurnSpeed = 3f;
+    public float attackWindupMoveSpeed = 2f;
+    private bool rotationLocked = false;
 
     [Header("Camera")]
     public LockOnSystem lockOn;
     public Camera Camera;
 
+    // Called by Animation Event at clip end
+    public void ResetBools()
+    {
+        isAttacking = false;
+        rotationLocked = false;
+    }
 
+    // Called by Animation Event at the commit frame
+    public void LockRotation()
+    {
+        rotationLocked = true;
+    }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         PlayAnim(idleAnim);
         controller = GetComponent<CharacterController>();
-        Debug.Log(controller);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (Input.GetKey(KeyCode.Mouse0))
+        if (Input.GetKeyDown(KeyCode.Mouse0) && Input.GetKey(KeyCode.LeftShift) && !isAttacking)
         {
-        //attack
+            PlayAnim(heavyAttackAnim);
+            isAttacking = true;
+            rotationLocked = false;
         }
-        else
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        else if (Input.GetKeyDown(KeyCode.Mouse0) && !isAttacking)
         {
-           //heaby
+            PlayAnim(attackAnim);
+            isAttacking = true;
+            rotationLocked = false;
         }
-
-        if (Input.GetKeyDown(KeyCode.Q))
+        else if (Input.GetKeyDown(KeyCode.Q) && !isAttacking)
         {
-            //skill
+            PlayAnim(specialAttackAnim);
+            isAttacking = true;
+            rotationLocked = false;
         }
 
         Move();
@@ -67,8 +84,6 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKey(KeyCode.D)) x += 1;
         if (Input.GetKey(KeyCode.A)) x -= 1;
 
-        Vector3 inputDir = new Vector3(x, 0f, z).normalized;
-
         Vector3 camForward = Camera.main.transform.forward;
         Vector3 camRight = Camera.main.transform.right;
         camForward.y = 0f;
@@ -80,27 +95,47 @@ public class PlayerController : MonoBehaviour
 
         if (moveDir.magnitude > 0.1f)
         {
-            if (lockOn != null && lockOn.IsLocked())
+            if (!rotationLocked)
             {
-                Vector3 toTarget = (lockOn.GetTarget().position - transform.position);
-                toTarget.y = 0f;
-                transform.rotation = Quaternion.Slerp(
-                    transform.rotation,
-                    Quaternion.LookRotation(toTarget),
-                    turnSpeed * Time.deltaTime
-                );
-            }
-            else
-            {
+                float currentTurnSpeed = isAttacking ? attackWindupTurnSpeed : turnSpeed;
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation,
                     Quaternion.LookRotation(moveDir),
-                    turnSpeed * Time.deltaTime
+                    currentTurnSpeed * Time.deltaTime
                 );
             }
-            if (Input.GetKeyDown(KeyCode.LeftShift)) { speed = runSpeed; }
-            controller.Move(moveDir * speed * Time.deltaTime);
-            speed = baseSpeed;
+
+            if (isAttacking)
+            {
+                if (!rotationLocked)
+                    controller.Move(moveDir * attackWindupMoveSpeed * Time.deltaTime);
+            }
+            else
+            {
+                if (Input.GetKey(KeyCode.LeftShift)) speed = runSpeed;
+                controller.Move(moveDir * speed * Time.deltaTime);
+                PlayAnim(speed == runSpeed ? runAnim : walkAnim);
+                speed = baseSpeed;
+            }
+        }
+        else
+        {
+            if (lockOn != null && lockOn.IsLocked() && lockOn.GetTarget() != null && !rotationLocked)
+            {
+                Vector3 toTarget = lockOn.GetTarget().position - transform.position;
+                toTarget.y = 0f;
+                if (toTarget.sqrMagnitude > 0.01f)
+                {
+                    float currentTurnSpeed = isAttacking ? attackWindupTurnSpeed : turnSpeed;
+                    transform.rotation = Quaternion.Slerp(
+                        transform.rotation,
+                        Quaternion.LookRotation(toTarget),
+                        currentTurnSpeed * Time.deltaTime
+                    );
+                }
+            }
+
+            if (!isAttacking) PlayAnim(idleAnim);
         }
 
         controller.Move(velocity * Time.deltaTime);
@@ -109,7 +144,6 @@ public class PlayerController : MonoBehaviour
     void PlayAnim(AnimationClip clip)
     {
         if (currentAnim == clip.name) return;
-
         anim.CrossFade(clip.name);
         currentAnim = clip.name;
     }
