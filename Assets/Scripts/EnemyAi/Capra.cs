@@ -22,8 +22,10 @@ public class Capra : MonoBehaviour
     [Header("Attack Cooldowns")]
     public float attack1Cooldown = 1.5f;
     public float attack2Cooldown = 3f;
+    public float decisionTime = 1f;
     private float attack1Timer = 0f;
     private float attack2Timer = 0f;
+    private float decisionTimer = 0f;
 
     [Header("Speed")]
     public float chaseSpeed = 4f;
@@ -33,11 +35,15 @@ public class Capra : MonoBehaviour
     [Header("Rotation")]
     public float turnSpeed = 8f;
 
+    private Vector3 attackTargetPos;
     private NavMeshAgent agent;
     private string currentAnim;
     private bool isAttacking = false;
     private bool isAttacking2 = false;
     private float distToPlayer;
+
+    private AnimationClip currentAttackAnim;
+    AnimationClip GetCurrentAttackAnim() => currentAttackAnim;
 
     void Start()
     {
@@ -47,10 +53,13 @@ public class Capra : MonoBehaviour
         PlayAnim(idleAnim);
     }
 
+
     void Update()
     {
+        
         if (healthSystem.IsStaggered)
         {
+            if (isAttacking) ResetBools(); // interrupt attack state
             agent.ResetPath();
             return;
         }
@@ -60,20 +69,28 @@ public class Capra : MonoBehaviour
 
         if (isAttacking)
         {
-            // keep creeping toward player but slow
-            agent.speed = (isAttacking2 ? jumpSpeed: attackMoveSpeed);
-            agent.SetDestination(player.position);
-            FacePlayer();
-            PlayAnim(attack1Anim == GetCurrentAttackAnim() ? attack1Anim : attack2Anim);
+            //FacePlayer();
+            PlayAnim(currentAttackAnim == attack1Anim ? attack1Anim : attack2Anim);
+
+            if (isAttacking2)
+            {
+                agent.speed = jumpSpeed;
+                agent.SetDestination(attackTargetPos); // frozen dir
+            }
+            else if (distToPlayer > closeRange)
+            {
+                agent.speed = attackMoveSpeed;
+                agent.SetDestination(attackTargetPos); // frozen dir
+            }
+            else
+            {
+                agent.ResetPath();
+            }
             return;
         }
 
         DecideAction();
     }
-
-    // track which attack is active so we keep playing it while moving
-    private AnimationClip currentAttackAnim;
-    AnimationClip GetCurrentAttackAnim() => currentAttackAnim;
 
     void TickCooldowns()
     {
@@ -81,8 +98,20 @@ public class Capra : MonoBehaviour
         attack2Timer -= Time.deltaTime;
     }
 
+    public void die()
+    {
+        ResetBools();
+    }
+
     void DecideAction()
     {
+        FacePlayer();
+        if (decisionTimer >= 0)
+        {
+            decisionTimer -= Time.deltaTime;
+            return;
+        }
+
         if (distToPlayer > aggroRange)
         {
             agent.ResetPath();
@@ -109,10 +138,22 @@ public class Capra : MonoBehaviour
 
     void Chase()
     {
-        agent.speed = chaseSpeed;
-        agent.SetDestination(player.position);
+        if (healthSystem.helathBar2.enabled == false)
+        {
+            healthSystem.turnOnHealth();
+        }
+        if (distToPlayer > closeRange)
+        {
+            agent.speed = chaseSpeed;
+            agent.SetDestination(player.position);
+            PlayAnim(walkAnim);
+        }
+        else
+        {
+            agent.ResetPath();
+            PlayAnim(idleAnim);
+        }
         FacePlayer();
-        PlayAnim(walkAnim);
     }
 
     void FacePlayer()
@@ -131,6 +172,8 @@ public class Capra : MonoBehaviour
     {
         isAttacking = true;
         currentAttackAnim = attackAnim;
+        attackTargetPos = player.position; // snapshot here
+        attackTargetPos.y = transform.position.y;
         PlayAnim(attackAnim);
     }
 
@@ -138,8 +181,10 @@ public class Capra : MonoBehaviour
     {
         isAttacking = false;
         currentAttackAnim = null;
+        currentAnim = "";
         agent.speed = chaseSpeed;
         isAttacking2 = false;
+        decisionTimer = decisionTime;
     }
 
     public void jump()

@@ -32,6 +32,11 @@ public class PlayerController : MonoBehaviour
     public LockOnSystem lockOn;
     public Camera Camera;
 
+    [Header("Gravity")]
+    public float gravity = -20f;
+    public float groundedGravity = -2f;  // small constant to keep grounded check stable
+    private float verticalVelocity = 0f;
+
     // Called by Animation Event at clip end
     public void ResetBools()
     {
@@ -137,7 +142,12 @@ public class PlayerController : MonoBehaviour
 
             if (!isAttacking) PlayAnim(idleAnim);
         }
+        if (controller.isGrounded)
+            verticalVelocity = groundedGravity;   // tiny push keeps isGrounded reliable
+        else
+            verticalVelocity += gravity * Time.deltaTime;
 
+        velocity.y = verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
     }
 

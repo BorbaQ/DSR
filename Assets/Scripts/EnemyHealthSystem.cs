@@ -26,8 +26,15 @@ public class EnemyHealthSystem : MonoBehaviour
 
     [Header("UI")]
     public Image healthBar;
+    public Image helathBar2;
 
     public bool IsStaggered => staggerTimer > 0f;
+
+    [Header("Death")]
+    public ParticleSystem deathParticles;
+    public float deathStaggerDuration = 10f;   // fallback if no particle system
+    private bool isDead = false;
+    private float deathTimer = 0f;
 
     void Start()
     {
@@ -37,6 +44,22 @@ public class EnemyHealthSystem : MonoBehaviour
 
     void Update()
     {
+        if (staggerTimer > 0f)
+        {
+            staggerTimer -= Time.deltaTime;
+            if (staggerTimer <= 0f)
+                anim.CrossFade(idleAnim.name);
+        }
+        if (isDead)
+        {
+            // Count down either particle duration or fallback duration
+            deathTimer -= Time.deltaTime;
+            if (deathTimer <= 0f)
+            {
+                GameObject.Destroy(gameObject);
+            }
+            return; // skip normal movement while death plays
+        }
         if (knockbackTimer > 0f)
         {
             knockbackTimer -= Time.deltaTime;
@@ -44,17 +67,12 @@ public class EnemyHealthSystem : MonoBehaviour
             knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, Time.deltaTime * 10f);
         }
 
-        if (staggerTimer > 0f)
-        {
-            staggerTimer -= Time.deltaTime;
-            if (staggerTimer <= 0f)
-                anim.CrossFade(idleAnim.name);
-        }
+        
     }
 
     public void TakeDamage(float amount, float knockbackForce, Vector3 hitDirection)
     {
-        if (currentHp <= 0f) return;
+        if (currentHp <= 0f || isDead) return;
 
         currentHp = Mathf.Clamp(currentHp - amount, 0f, maxHp);
 
@@ -67,11 +85,46 @@ public class EnemyHealthSystem : MonoBehaviour
         knockbackVelocity = hitDirection.normalized * knockbackForce;
         knockbackVelocity.y = 0f;
         knockbackTimer = knockbackDuration;
-        staggerTimer = staggerDuration;
+
+        if (staggerTimer <= 0.1f)
+            staggerTimer = staggerDuration;
 
         if (currentHp <= 0f)
+        {
             onDeath.Invoke();
+            TriggerDeath();
+        }
     }
+
+    public void turnOnHealth()
+    {
+        helathBar2.enabled = true;
+    }
+
+    private void TriggerDeath()
+    {
+        isDead = true;
+        knockbackTimer = 0f;
+        staggerTimer = deathStaggerDuration;
+        anim.CrossFade(idleAnim.name);
+
+
+        // Play particle effect
+        if (deathParticles != null)
+        {
+            deathParticles.Play();
+            // Use actual particle duration if available, otherwise fallback
+            float particleDuration = 10f;
+            deathTimer = deathStaggerDuration;
+        }
+        else
+        {
+            deathTimer = deathStaggerDuration;
+        }
+        staggerTimer = deathStaggerDuration;
+
+    }
+
 
     public void Heal(float amount)
     {
