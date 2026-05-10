@@ -17,19 +17,19 @@ public class PlayerHB : MonoBehaviour
 
     public void Light()
     {
-        hb.SetHitDealer(Sword, damage: 5f, knockback: 8f);
+        hb.SetHitDealer(Sword, damage: 5f, knockback: 0f);
         hb.EnableHitbox(Sword);
     }
 
     public void Heavy()
     {
-        hb.SetHitDealer(Sword, damage: 7f, knockback: 8f);
+        hb.SetHitDealer(Sword, damage: 7f, knockback: 0f);
         hb.EnableHitbox(Sword);
     }
 
     public void special()
     {
-        hb.SetHitDealer(Sword, damage: 10f, knockback: 8f);
+        hb.SetHitDealer(Sword, damage: 10f, knockback: 0f);
         hb.EnableHitbox(Sword);
     }
 

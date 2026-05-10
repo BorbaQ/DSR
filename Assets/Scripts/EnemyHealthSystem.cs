@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -32,9 +33,15 @@ public class EnemyHealthSystem : MonoBehaviour
 
     [Header("Death")]
     public ParticleSystem deathParticles;
-    public float deathStaggerDuration = 10f;   // fallback if no particle system
+    public float deathStaggerDuration = 10f;
     private bool isDead = false;
     private float deathTimer = 0f;
+
+    [Header("Multi-Hitbox Settings")]
+    public float hitCooldown = 1f;
+
+    // Maps hitId -> time when it expires
+    private Dictionary<int, float> recentHits = new Dictionary<int, float>();
 
     void Start()
     {
@@ -44,35 +51,60 @@ public class EnemyHealthSystem : MonoBehaviour
 
     void Update()
     {
+        // Clean up expired hit IDs so the dictionary doesn't grow forever
+        float now = Time.time;
+        List<int> toRemove = null;
+        foreach (var kv in recentHits)
+        {
+            if (kv.Value <= now)
+            {
+                toRemove ??= new List<int>();
+                toRemove.Add(kv.Key);
+            }
+        }
+        if (toRemove != null)
+            foreach (int id in toRemove)
+                recentHits.Remove(id);
+
         if (staggerTimer > 0f)
         {
             staggerTimer -= Time.deltaTime;
             if (staggerTimer <= 0f)
                 anim.CrossFade(idleAnim.name);
         }
+
         if (isDead)
         {
-            // Count down either particle duration or fallback duration
             deathTimer -= Time.deltaTime;
             if (deathTimer <= 0f)
-            {
-                GameObject.Destroy(gameObject);
-            }
-            return; // skip normal movement while death plays
+                Destroy(gameObject);
+            return;
         }
+
         if (knockbackTimer > 0f)
         {
             knockbackTimer -= Time.deltaTime;
             controller.Move(knockbackVelocity * Time.deltaTime);
             knockbackVelocity = Vector3.Lerp(knockbackVelocity, Vector3.zero, Time.deltaTime * 10f);
         }
-
-        
     }
 
-    public void TakeDamage(float amount, float knockbackForce, Vector3 hitDirection)
+    /// <summary>
+    /// hitId: pass HitDealer.GetInstanceID() so multi-hitbox bosses don't
+    /// get hit multiple times per swing. Pass -1 to skip dedup (e.g. DoT).
+    /// </summary>
+    public void TakeDamage(float amount, float knockbackForce, Vector3 hitDirection, int hitId = -1)
     {
         if (currentHp <= 0f || isDead) return;
+
+        // Dedup check — ignore if we already registered this hit recently
+        if (hitId != -1)
+        {
+            if (recentHits.TryGetValue(hitId, out float expiry) && expiry > Time.time)
+                return;
+
+            recentHits[hitId] = Time.time + hitCooldown;
+        }
 
         currentHp = Mathf.Clamp(currentHp - amount, 0f, maxHp);
 
@@ -80,7 +112,6 @@ public class EnemyHealthSystem : MonoBehaviour
             healthBar.fillAmount = currentHp / maxHp;
 
         onHit.Invoke(currentHp, maxHp);
-
 
         knockbackVelocity = hitDirection.normalized * knockbackForce;
         knockbackVelocity.y = 0f;
@@ -108,23 +139,12 @@ public class EnemyHealthSystem : MonoBehaviour
         staggerTimer = deathStaggerDuration;
         anim.CrossFade(idleAnim.name);
 
-
-        // Play particle effect
         if (deathParticles != null)
-        {
             deathParticles.Play();
-            // Use actual particle duration if available, otherwise fallback
-            float particleDuration = 10f;
-            deathTimer = deathStaggerDuration;
-        }
-        else
-        {
-            deathTimer = deathStaggerDuration;
-        }
+
+        deathTimer = deathStaggerDuration;
         staggerTimer = deathStaggerDuration;
-
     }
-
 
     public void Heal(float amount)
     {
