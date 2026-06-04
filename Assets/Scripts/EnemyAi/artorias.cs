@@ -59,6 +59,7 @@ public class Artorias : MonoBehaviour
     private bool isAttacking = false;
     private bool isAttacking2 = false;
     private float distToPlayer;
+    private bool isBackingOff = false;
 
     private AnimationClip currentAttackAnim;
     AnimationClip GetCurrentAttackAnim() => currentAttackAnim;
@@ -87,18 +88,28 @@ public class Artorias : MonoBehaviour
 
         if (isAttacking)
         {
-            FacePlayer();
-            attackTargetPos = player.position;
-            attackTargetPos.y = transform.position.y;
+            if (!isAttacking2)
+            {
+                FacePlayer();
+            }
 
-            // Poll: if the attack animation is done, end the attack ourselves
             if (currentAttackAnim != null && !anim.IsPlaying(currentAttackAnim.name))
             {
                 ResetBools();
                 return;
             }
 
-            if (isAttacking2)
+            if (isBackingOff)
+            {
+                Vector3 backDir = (transform.position - player.position).normalized;
+                Vector3 backTarget = transform.position + backDir * 5f;
+                if (NavMesh.SamplePosition(backTarget, out NavMeshHit hit, 3f, NavMesh.AllAreas))
+                {
+                    agent.speed = jumpSpeed;
+                    agent.SetDestination(hit.position);
+                }
+            }
+            else if (isAttacking2)
             {
                 agent.speed = jumpSpeed;
                 agent.SetDestination(attackTargetPos);
@@ -114,6 +125,7 @@ public class Artorias : MonoBehaviour
             }
             return;
         }
+        FacePlayer();
 
         DecideAction();
     }
@@ -252,11 +264,13 @@ public class Artorias : MonoBehaviour
 
     void StartAttack(AnimationClip attackAnim)
     {
-        if (isAttacking) return; // hard gate
+        if (isAttacking) return;
         isAttacking = true;
         currentAttackAnim = attackAnim;
         currentAnim = attackAnim.name;
-        anim[attackAnim.name].wrapMode = WrapMode.Once; // plays once, stops dead
+        attackTargetPos = player.position;
+        attackTargetPos.y = transform.position.y;
+        anim[attackAnim.name].wrapMode = WrapMode.Once;
         anim.CrossFade(attackAnim.name);
     }
 
@@ -264,26 +278,31 @@ public class Artorias : MonoBehaviour
     {
         isAttacking = false;
         currentAttackAnim = null;
+        isBackingOff = false;
         currentAnim = "";
         agent.speed = chaseSpeed;
         isAttacking2 = false;
         decisionTimer = decisionTime;
+        agent.ResetPath();
+        agent.velocity = Vector3.zero;
     }
 
     public void jump()
     {
-        agent.speed = jumpSpeed;
-        isAttacking2 = true;
+        isAttacking2 = true;    // speed applied in Update
     }
+
     public void backoff()
     {
-        agent.speed = -jumpSpeed;
+        isBackingOff = true;    // speed applied in Update
     }
 
     public void stand()
     {
-        agent.speed = 0;
-        isAttacking2 = false;
+ 
+        isBackingOff = false;
+        agent.ResetPath();
+        agent.velocity = Vector3.zero;
     }
 
     void PlayAnim(AnimationClip clip)
