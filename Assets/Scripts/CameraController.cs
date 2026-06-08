@@ -20,7 +20,6 @@ public class CameraController : MonoBehaviour
     private float yaw;
     private float pitch;
 
-    // Set by LockOnSystem
     private Transform lockedTarget;
     private bool isLocked;
 
@@ -55,19 +54,15 @@ public class CameraController : MonoBehaviour
 
     void UpdateLockedCamera()
     {
-        // Position camera behind player relative to the enemy direction
         Vector3 dirToEnemy = (lockedTarget.position - player.position);
         dirToEnemy.y = 0f;
         dirToEnemy.Normalize();
 
-        // Step back behind the player, raise up a bit
         Vector3 targetPos = player.position - dirToEnemy * lockedDistance;
         targetPos.y = player.position.y + lockedHeight;
 
-        // Lerp smoothly to avoid snapping
         transform.position = Vector3.Lerp(transform.position, targetPos, lockOnLerpSpeed * Time.deltaTime);
 
-        // Look at midpoint between player and enemy so both are in frame
         Vector3 lookTarget = (player.position + lockedTarget.position) / 2f;
         lookTarget.y = player.position.y + 1.5f;
 
@@ -78,7 +73,6 @@ public class CameraController : MonoBehaviour
         );
     }
 
-    // Called by LockOnSystem
     public void SetLockOn(Transform target)
     {
         lockedTarget = target;

@@ -3,8 +3,6 @@ using UnityEngine;
 public class PlayerHB : MonoBehaviour
 {
     private HitboxManager2 hb;
-
-    // hitbox index reference so its readable
     const int Sword = 0;
    
 
@@ -12,8 +10,6 @@ public class PlayerHB : MonoBehaviour
     {
         hb = GetComponent<HitboxManager2>();
     }
-
-    // --- Animation Events ---
 
     public void Light()
     {

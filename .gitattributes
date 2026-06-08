@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+C:/Users/Kasprzak/Documents/GitHub/DSR/Assets/Models/Artorias/[Action[[:space:]]Stash].003.anim filter=lfs diff=lfs merge=lfs -text
+C:/Users/Kasprzak/Documents/GitHub/DSR/Assets/Models/Artorias/[Action[[:space:]]Stash].006.anim filter=lfs diff=lfs merge=lfs -text
+C:/Users/Kasprzak/Documents/GitHub/DSR/Assets/Models/Artorias/[Action[[:space:]]Stash].007.anim filter=lfs diff=lfs merge=lfs -text

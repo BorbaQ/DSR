@@ -23,7 +23,7 @@ public class HealthSystem : MonoBehaviour
 
     [Header("Animation")]
     public UnityEngine.Animation anim;
-    public AnimationClip idleAnim;          // drag your idle clip here
+    public AnimationClip idleAnim;
     private PlayerController playerController;
 
     [Header("Events")]
@@ -62,8 +62,6 @@ public class HealthSystem : MonoBehaviour
         if (staggerTimer > 0f)
         {
             staggerTimer -= Time.deltaTime;
-
-            // once stagger ends snap back to idle and reset attack state
             if (staggerTimer <= 0f)
             {
                 playerController.ResetBools();
@@ -81,7 +79,6 @@ public class HealthSystem : MonoBehaviour
         HealthBar.fillAmount = currentHp / maxHp;
         onHit.Invoke(currentHp, maxHp);
 
-        // interrupt whatever anim is playing and go idle immediately
         playerController.ResetBools();
         anim.CrossFade(idleAnim.name);
 

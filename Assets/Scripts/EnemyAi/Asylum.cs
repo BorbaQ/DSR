@@ -29,7 +29,7 @@ public class Asylum : MonoBehaviour
 
     [Header("Speed")]
     public float chaseSpeed = 4f;
-    public float attackMoveSpeed = 1.5f;  // slow crawl while attacking
+    public float attackMoveSpeed = 1.5f;
     public float jumpSpeed = 8f;
 
     [Header("Rotation")]
@@ -59,7 +59,7 @@ public class Asylum : MonoBehaviour
 
         if (healthSystem.IsStaggered)
         {
-            if (isAttacking) ResetBools(); // interrupt attack state
+            if (isAttacking) ResetBools();
             agent.ResetPath();
             return;
         }
@@ -69,18 +69,17 @@ public class Asylum : MonoBehaviour
 
         if (isAttacking)
         {
-            //FacePlayer();
             PlayAnim(currentAttackAnim == attack1Anim ? attack1Anim : attack2Anim);
 
             if (isAttacking2)
             {
                 agent.speed = jumpSpeed;
-                agent.SetDestination(attackTargetPos); // frozen dir
+                agent.SetDestination(attackTargetPos);
             }
             else if (distToPlayer > closeRange)
             {
                 agent.speed = attackMoveSpeed;
-                agent.SetDestination(attackTargetPos); // frozen dir
+                agent.SetDestination(attackTargetPos);
             }
             else
             {
@@ -172,7 +171,7 @@ public class Asylum : MonoBehaviour
     {
         isAttacking = true;
         currentAttackAnim = attackAnim;
-        attackTargetPos = player.position; // snapshot here
+        attackTargetPos = player.position;
         attackTargetPos.y = transform.position.y;
         PlayAnim(attackAnim);
     }

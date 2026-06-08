@@ -11,15 +11,12 @@ public class Artorias : MonoBehaviour
     [Header("Animations")]
     public AnimationClip idleAnim;
     public AnimationClip walkAnim;
-// regular
     public AnimationClip spin;
     public AnimationClip regattack;
-    // run
     public AnimationClip runattack1;
     public AnimationClip runattack2;
     public AnimationClip runattack3;
     public AnimationClip jumpattack;
-    // back
     public AnimationClip backflip;
 
     [Header("Attack Ranges")]
@@ -78,7 +75,7 @@ public class Artorias : MonoBehaviour
 
         if (healthSystem.IsStaggered)
         {
-            if (isAttacking) ResetBools(); // interrupt attack state
+            if (isAttacking) ResetBools();
             agent.ResetPath();
             return;
         }
@@ -146,11 +143,11 @@ public class Artorias : MonoBehaviour
     void DecideAction()
     {
         if (isAttacking) return;
-        Debug.Log($"DecideAction called. isAttacking={isAttacking}");
         FacePlayer();
         if (decisionTimer > 0)
         {
             decisionTimer -= Time.deltaTime;
+            PlayAnim(idleAnim);
             return;
         }
 
@@ -161,7 +158,6 @@ public class Artorias : MonoBehaviour
             return;
         }
 
-        // Close range attacks - each has its own independent timer
         if (distToPlayer <= closeRange)
         {
             if (attack1Timer <= 0f)
@@ -190,7 +186,6 @@ public class Artorias : MonoBehaviour
             
         }
 
-        // Mid range - uses its OWN timer, not attack2Timer
         if (distToPlayer <= midRange && distToPlayer > closeRange)
         {
             if (jump1Timer <= 0f)
@@ -289,12 +284,12 @@ public class Artorias : MonoBehaviour
 
     public void jump()
     {
-        isAttacking2 = true;    // speed applied in Update
+        isAttacking2 = true;
     }
 
     public void backoff()
     {
-        isBackingOff = true;    // speed applied in Update
+        isBackingOff = true;
     }
 
     public void stand()

@@ -29,7 +29,7 @@ public class Capra : MonoBehaviour
 
     [Header("Speed")]
     public float chaseSpeed = 4f;
-    public float attackMoveSpeed = 1.5f;  // slow crawl while attacking
+    public float attackMoveSpeed = 1.5f;
     public float jumpSpeed = 8f;
 
     [Header("Rotation")]
@@ -52,35 +52,28 @@ public class Capra : MonoBehaviour
         agent.speed = chaseSpeed;
         PlayAnim(idleAnim);
     }
-
-
     void Update()
     {
-        
         if (healthSystem.IsStaggered)
         {
-            if (isAttacking) ResetBools(); // interrupt attack state
+            if (isAttacking) ResetBools();
             agent.ResetPath();
             return;
         }
-
         distToPlayer = Vector3.Distance(transform.position, player.position);
         TickCooldowns();
-
         if (isAttacking)
         {
-            //FacePlayer();
             PlayAnim(currentAttackAnim == attack1Anim ? attack1Anim : attack2Anim);
-
             if (isAttacking2)
             {
                 agent.speed = jumpSpeed;
-                agent.SetDestination(attackTargetPos); // frozen dir
+                agent.SetDestination(attackTargetPos);
             }
             else if (distToPlayer > closeRange)
             {
                 agent.speed = attackMoveSpeed;
-                agent.SetDestination(attackTargetPos); // frozen dir
+                agent.SetDestination(attackTargetPos);
             }
             else
             {
@@ -88,21 +81,17 @@ public class Capra : MonoBehaviour
             }
             return;
         }
-
         DecideAction();
     }
-
     void TickCooldowns()
     {
         attack1Timer -= Time.deltaTime;
         attack2Timer -= Time.deltaTime;
     }
-
     public void die()
     {
         ResetBools();
     }
-
     void DecideAction()
     {
         FacePlayer();
@@ -111,31 +100,26 @@ public class Capra : MonoBehaviour
             decisionTimer -= Time.deltaTime;
             return;
         }
-
         if (distToPlayer > aggroRange)
         {
             agent.ResetPath();
             PlayAnim(idleAnim);
             return;
         }
-
         if (distToPlayer <= closeRange && attack1Timer <= 0f)
         {
             StartAttack(attack1Anim);
             attack1Timer = attack1Cooldown;
             return;
         }
-
         if (distToPlayer <= midRange && distToPlayer > closeRange && attack2Timer <= 0f)
         {
             StartAttack(attack2Anim);
             attack2Timer = attack2Cooldown;
             return;
         }
-
         Chase();
     }
-
     void Chase()
     {
         if (healthSystem.helathBar2.enabled == false)
@@ -155,7 +139,6 @@ public class Capra : MonoBehaviour
         }
         FacePlayer();
     }
-
     void FacePlayer()
     {
         Vector3 dir = (player.position - transform.position);
@@ -167,16 +150,14 @@ public class Capra : MonoBehaviour
             turnSpeed * Time.deltaTime
         );
     }
-
     void StartAttack(AnimationClip attackAnim)
     {
         isAttacking = true;
         currentAttackAnim = attackAnim;
-        attackTargetPos = player.position; // snapshot here
+        attackTargetPos = player.position;
         attackTargetPos.y = transform.position.y;
         PlayAnim(attackAnim);
     }
-
     public void ResetBools()
     {
         isAttacking = false;
@@ -186,19 +167,16 @@ public class Capra : MonoBehaviour
         isAttacking2 = false;
         decisionTimer = decisionTime;
     }
-
     public void jump()
     {
         agent.speed = jumpSpeed;
         isAttacking2 = true ;
     }
-
     public void stand()
     {
         agent.speed = 0;
         isAttacking2 = false ;
     }
-
     void PlayAnim(AnimationClip clip)
     {
         if (currentAnim == clip.name) return;

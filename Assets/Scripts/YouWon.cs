@@ -13,7 +13,6 @@ public class YouWon : MonoBehaviour
     {
 
     }
-
     void Update()
     {
         if (timer < fadeDuration && !backova)
@@ -24,7 +23,6 @@ public class YouWon : MonoBehaviour
             if (timer >= fadeDuration) { timer = fadeDuration; backova = true; }
             return;
         }
-        
         if (timer > 0 && backova)
         {
             timer -= Time.deltaTime;
@@ -32,7 +30,6 @@ public class YouWon : MonoBehaviour
             image.color = new Color(image.color.r, image.color.g, image.color.b, alpha);
         }
     }
-
     public void DotheThing()
     {
         playehealth.Heal(10000f);

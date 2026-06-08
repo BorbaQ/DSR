@@ -27,7 +27,6 @@ public class LockOnSystem : MonoBehaviour
             else TryLockOn();
         }
 
-        // Auto break if target gone or out of range
         if (isLocked)
         {
             if (lockedTarget == null ||
@@ -65,7 +64,7 @@ public class LockOnSystem : MonoBehaviour
         {
             lockedTarget = best;
             isLocked = true;
-            cameraController.SetLockOn(lockedTarget); // <-- camera takes over
+            cameraController.SetLockOn(lockedTarget);
         }
     }
 
@@ -73,7 +72,7 @@ public class LockOnSystem : MonoBehaviour
     {
         isLocked = false;
         lockedTarget = null;
-        cameraController.SetLockOn(null); // <-- release camera
+        cameraController.SetLockOn(null);
     }
 
     public bool IsLocked() => isLocked;

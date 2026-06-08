@@ -39,8 +39,6 @@ public class EnemyHealthSystem : MonoBehaviour
 
     [Header("Multi-Hitbox Settings")]
     public float hitCooldown = 1f;
-
-    // Maps hitId -> time when it expires
     private Dictionary<int, float> recentHits = new Dictionary<int, float>();
 
     void Start()
@@ -51,7 +49,6 @@ public class EnemyHealthSystem : MonoBehaviour
 
     void Update()
     {
-        // Clean up expired hit IDs so the dictionary doesn't grow forever
         float now = Time.time;
         List<int> toRemove = null;
         foreach (var kv in recentHits)
@@ -89,15 +86,10 @@ public class EnemyHealthSystem : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// hitId: pass HitDealer.GetInstanceID() so multi-hitbox bosses don't
-    /// get hit multiple times per swing. Pass -1 to skip dedup (e.g. DoT).
-    /// </summary>
     public void TakeDamage(float amount, float knockbackForce, Vector3 hitDirection, int hitId = -1)
     {
         if (currentHp <= 0f || isDead) return;
 
-        // Dedup check — ignore if we already registered this hit recently
         if (hitId != -1)
         {
             if (recentHits.TryGetValue(hitId, out float expiry) && expiry > Time.time)

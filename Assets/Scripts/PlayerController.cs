@@ -34,17 +34,14 @@ public class PlayerController : MonoBehaviour
 
     [Header("Gravity")]
     public float gravity = -20f;
-    public float groundedGravity = -2f;  // small constant to keep grounded check stable
+    public float groundedGravity = -2f;
     private float verticalVelocity = 0f;
 
-    // Called by Animation Event at clip end
     public void ResetBools()
     {
         isAttacking = false;
         rotationLocked = false;
     }
-
-    // Called by Animation Event at the commit frame
     public void LockRotation()
     {
         rotationLocked = true;
@@ -55,7 +52,6 @@ public class PlayerController : MonoBehaviour
         PlayAnim(idleAnim);
         controller = GetComponent<CharacterController>();
     }
-
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Mouse0) && Input.GetKey(KeyCode.LeftShift) && !isAttacking)
@@ -143,7 +139,7 @@ public class PlayerController : MonoBehaviour
             if (!isAttacking) PlayAnim(idleAnim);
         }
         if (controller.isGrounded)
-            verticalVelocity = groundedGravity;   // tiny push keeps isGrounded reliable
+            verticalVelocity = groundedGravity;
         else
             verticalVelocity += gravity * Time.deltaTime;
 
